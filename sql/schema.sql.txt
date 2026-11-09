@@ -1,0 +1,41 @@
+-- 1. Create database if it doesn't already exist
+CREATE DATABASE IF NOT EXISTS fake_product_db;
+USE fake_product_db;
+
+-- 2. Manufacturers table
+CREATE TABLE manufacturers (
+    manufacturer_id INT AUTO_INCREMENT PRIMARY KEY,
+    company_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Products table
+CREATE TABLE products (
+    product_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    manufacture_date DATE,
+    manufacturer_id INT NOT NULL,
+    FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(manufacturer_id) ON DELETE CASCADE
+);
+
+-- 4. QR Codes table
+CREATE TABLE qr_codes (
+    qr_id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT,
+    unique_token VARCHAR(255) UNIQUE NOT NULL,
+    scan_count INT DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'GENUINE',
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+);
+
+-- 5. Scan Logs table
+CREATE TABLE scan_logs (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    qr_id INT NOT NULL,
+    scan_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45),
+    FOREIGN KEY (qr_id) REFERENCES qr_codes(qr_id) ON DELETE CASCADE
+);
