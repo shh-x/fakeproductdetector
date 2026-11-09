@@ -1,18 +1,35 @@
 package com.fakedetector.util;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
 
 public class DBConnection {
-    private static final String URL = "jdbc:mysql://localhost:3306/fake_product_db";
-    private static final String USER = "root";
-    private static final String PASSWORD = "ns@27";
+    private static DBConnection instance;
+    private Connection connection;
 
-    private static DBConnection instance;   // the ONE object of this class
-    private Connection connection;          // the ONE phone line
+    private String url;
+    private String user;
+    private String password;
 
-    private DBConnection() { }              // private: nobody else can say "new DBConnection()"
+    private DBConnection() {
+        try (InputStream in = DBConnection.class.getClassLoader()
+                .getResourceAsStream("config.properties")) {
+            if (in == null) {
+                throw new IllegalStateException("config.properties not found in src/main/resources");
+            }
+            Properties props = new Properties();
+            props.load(in);
+            url = props.getProperty("db.url");
+            user = props.getProperty("db.user");
+            password = props.getProperty("db.password");
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not read config.properties", e);
+        }
+    }
 
     public static DBConnection getInstance() {
         if (instance == null) {
@@ -23,7 +40,7 @@ public class DBConnection {
 
     public Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            connection = DriverManager.getConnection(url, user, password);
         }
         return connection;
     }
