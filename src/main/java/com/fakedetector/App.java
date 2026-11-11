@@ -1,30 +1,19 @@
 package com.fakedetector;
 
-import com.fakedetector.dao.QRCodeDAO;
-import com.fakedetector.model.QRCode;
-import com.fakedetector.util.QRImageGenerator;
-import com.fakedetector.util.TokenGenerator;
-
-import java.nio.file.Paths;
+import com.fakedetector.service.ScanService;
 
 public class App {
     public static void main(String[] args) {
         try {
-            QRCodeDAO qrDao = new QRCodeDAO();
-            int productId = 1; // Must be a product that exists in your products table
+            ScanService service = new ScanService();
+            String realToken = "03f28e9297b08afe6b146cf7ad6e214d" ;//change it back later
 
-            for (int i = 0; i < 3; i++) {
-                String token = TokenGenerator.generate();
-                int qrId = qrDao.insert(productId, token);
-                
-                // Generates the PNG file inside a folder named 'qrcodes'
-                QRImageGenerator.generate(token, Paths.get("qrcodes", "qr_" + qrId + ".png"), 300);
-                
-                System.out.println("Created QR #" + qrId + " token=" + token);
-
-                QRCode found = qrDao.findByToken(token);
-                System.out.println("Looked up: " + found);
+            for (int i = 1; i <= 7; i++) {
+                System.out.println("Scan " + i + ": " + service.verify(realToken, "127.0.0.1"));
             }
+
+            System.out.println("Fake token: " + service.verify("abc123", "127.0.0.1"));
+            System.out.println("Empty token: " + service.verify("", "127.0.0.1"));
         } catch (Exception e) {
             e.printStackTrace();
         }
