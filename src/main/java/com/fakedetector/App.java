@@ -1,35 +1,30 @@
 package com.fakedetector;
 
-import com.fakedetector.dao.ManufacturerDAO;
-import com.fakedetector.model.Manufacturer;
-import org.mindrot.jbcrypt.BCrypt;
+import com.fakedetector.dao.QRCodeDAO;
+import com.fakedetector.model.QRCode;
+import com.fakedetector.util.QRImageGenerator;
+import com.fakedetector.util.TokenGenerator;
 
-import java.sql.SQLIntegrityConstraintViolationException;
+import java.nio.file.Paths;
 
 public class App {
     public static void main(String[] args) {
         try {
-            ManufacturerDAO dao = new ManufacturerDAO();
+            QRCodeDAO qrDao = new QRCodeDAO();
+            int productId = 1; // Must be a product that exists in your products table
 
-            String hash = BCrypt.hashpw("secret123", BCrypt.gensalt());
-            System.out.println("Hash 1: " + hash);
-            System.out.println("Hash 2: " + BCrypt.hashpw("secret123", BCrypt.gensalt()));
+            for (int i = 0; i < 3; i++) {
+                String token = TokenGenerator.generate();
+                int qrId = qrDao.insert(productId, token);
+                
+                // Generates the PNG file inside a folder named 'qrcodes'
+                QRImageGenerator.generate(token, Paths.get("qrcodes", "qr_" + qrId + ".png"), 300);
+                
+                System.out.println("Created QR #" + qrId + " token=" + token);
 
-            try {
-                int id = dao.insert(new Manufacturer("Beta Foods", "beta@example.com", hash));
-                System.out.println("Inserted id: " + id);
-            } catch (SQLIntegrityConstraintViolationException e) {
-                System.out.println("❌ Email already registered! Please use a different email.");
+                QRCode found = qrDao.findByToken(token);
+                System.out.println("Looked up: " + found);
             }
-
-            Manufacturer found = dao.findByEmail("beta@example.com");
-            System.out.println("Found: " + found);
-
-            if (found != null) {
-                System.out.println("Right password: " + BCrypt.checkpw("secret123", found.getPasswordHash()));
-                System.out.println("Wrong password: " + BCrypt.checkpw("wrong", found.getPasswordHash()));
-            }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
