@@ -17,7 +17,7 @@ public class ScanService {
     private final QRCodeDAO qrDao = new QRCodeDAO();
     private final ScanLogDAO logDao = new ScanLogDAO();
 
-    public VerificationResult verify(String token, String ipAddress) throws SQLException {
+    public synchronized VerificationResult verify(String token, String ipAddress) throws SQLException {
         if (token == null || token.isBlank()) {
             return VerificationResult.COUNTERFEIT;
         }

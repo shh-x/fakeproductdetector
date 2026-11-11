@@ -38,12 +38,19 @@ public class DBConnection {
         return instance;
     }
 
+
     public Connection getConnection() throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(url, user, password);
+    if (connection == null || connection.isClosed() || !connection.isValid(2)) {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("MySQL driver not found", e);
         }
-        return connection;
+        connection = DriverManager.getConnection(url, user, password);
     }
+    return connection;
+}
+
 }
     
 
