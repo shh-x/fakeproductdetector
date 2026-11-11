@@ -42,7 +42,6 @@ public class QRCodeDAO {
 
 
 
-
     // Finds one QR code by its unique token, returns null if not found
     public QRCode findByToken(String token) throws SQLException {
         String sql = "SELECT qr_id, product_id, unique_token, scan_count, status, created_at " +
@@ -73,4 +72,14 @@ public class QRCodeDAO {
         }
         return null; // Returns null if no matching token exists
     }
+    
+    public void incrementScanCount(int qrId) throws SQLException {
+        String sql = "UPDATE qr_codes SET scan_count = scan_count + 1 WHERE qr_id = ?";
+        Connection con = DBConnection.getInstance().getConnection();
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, qrId);
+            ps.executeUpdate();
+        }
+    }
+
 }
