@@ -45,6 +45,7 @@ public class LoginServlet extends HttpServlet {
             HttpSession session = req.getSession(true); // hand out a brand-new one
             session.setAttribute("manufacturerId", m.getManufacturerId());
             session.setAttribute("companyName", m.getCompanyName());
+            session.setAttribute("csrfToken", com.fakedetector.util.TokenGenerator.generate());
             resp.sendRedirect(req.getContextPath() + "/manufacturer/dashboard");
 
         } catch (SQLException e) {
