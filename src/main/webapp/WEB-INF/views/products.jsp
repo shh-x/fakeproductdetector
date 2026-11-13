@@ -18,6 +18,7 @@
     <p><label>Price<br><input type="number" name="price" step="0.01" min="0.01" value="<c:out value='${price}'/>" required></label></p>
     <p><label>Manufacture date (optional)<br><input type="date" name="date" value="<c:out value='${date}'/>"></label></p>
     <button type="submit">Add product</button>
+    <input type="hidden" name="csrf" value="<c:out value='${sessionScope.csrfToken}'/>">
   </form>
 
   <h2>Your products</h2>

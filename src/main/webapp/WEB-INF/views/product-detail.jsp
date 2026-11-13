@@ -22,6 +22,7 @@
     <form method="post" action="${pageContext.request.contextPath}/manufacturer/product?id=${product.productId}">
       <label>How many QR codes? <input type="number" name="count" min="1" max="100" value="10" required></label>
       <button type="submit">Generate</button>
+      <input type="hidden" name="csrf" value="<c:out value='${sessionScope.csrfToken}'/>">
     </form>
     <p><button onclick="window.print()">Print this page</button></p>
   </div>

@@ -8,3 +8,6 @@ main { max-width: 480px; margin: 0 auto; padding: 16px; }
 #result.warn { background: #b26a00; }
 #result.bad  { background: #b00020; }
 #result button { font-size: 1rem; padding: 10px 16px; margin-top: 12px; }
+[hidden] {
+  display: none !important;
+}
