@@ -1,8 +1,10 @@
 package com.fakedetector.dao;
 
+import com.fakedetector.model.ProductLabel;
 import com.fakedetector.model.QRCode;
 import com.fakedetector.model.QRStatus;
 import com.fakedetector.util.DBConnection;
+import com.fakedetector.model.ProductLabel;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -118,5 +120,21 @@ public class QRCodeDAO {
             ps.executeUpdate();
         }
     }
+    public ProductLabel findLabel(int qrId) throws SQLException {
+    String sql = "SELECT p.name, m.company_name FROM qr_codes q "
+               + "JOIN products p ON q.product_id = p.product_id "
+               + "JOIN manufacturers m ON p.manufacturer_id = m.manufacturer_id "
+               + "WHERE q.qr_id = ?";
+    Connection con = DBConnection.getInstance().getConnection();
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setInt(1, qrId);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return new ProductLabel(rs.getString("name"), rs.getString("company_name"));
+            }
+        }
+    }
+    return null;
+}
 
 }
