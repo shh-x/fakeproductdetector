@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verify a product</title>
+  <link rel="stylesheet" href="css/scan.css">
+</head>
+<body>
+<main>
+  <h1>Verify your product</h1>
+
+  <section id="scanner">
+    <p>Point your camera at the QR code on the product.</p>
+    <div id="reader"></div>
+    <p id="camera-msg" role="alert"></p>
+
+    <details>
+      <summary>Camera not working? Other ways to check</summary>
+      <p><label>Upload a photo of the QR code<br>
+        <input type="file" id="file-input" accept="image/*"></label></p>
+      <p><label>Or type the code<br>
+        <input type="text" id="manual-token" maxlength="64" autocomplete="off"></label>
+        <button type="button" id="manual-btn">Check</button></p>
+    </details>
+  </section>
+
+  <section id="result" hidden aria-live="polite">
+    <h2 id="verdict"></h2>
+    <p id="detail"></p>
+    <button type="button" id="again">Scan another product</button>
+  </section>
+</main>
+
+<script src="js/html5-qrcode.min.js"></script>
+<script src="js/scan.js"></script>
+</body>
+</html>
