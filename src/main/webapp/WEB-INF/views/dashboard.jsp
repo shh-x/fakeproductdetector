@@ -6,7 +6,7 @@
 <title>Dashboard</title></head>
 <body>
   <h1>Welcome, <c:out value="${sessionScope.companyName}"/></h1>
-  <p>Products and QR generation will appear here in the next step.</p>
+  <p><a href="${pageContext.request.contextPath}/manufacturer/products">Manage products and QR codes</a></p>
   <form method="post" action="${pageContext.request.contextPath}/logout">
     <button type="submit">Log out</button>
   </form>
