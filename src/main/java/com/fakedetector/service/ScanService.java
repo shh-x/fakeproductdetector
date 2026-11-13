@@ -2,65 +2,72 @@ package com.fakedetector.service;
 
 import com.fakedetector.dao.QRCodeDAO;
 import com.fakedetector.dao.ScanLogDAO;
-import com.fakedetector.model.QRCode;
-import com.fakedetector.model.QRStatus;
-import com.fakedetector.model.VerificationResult;
+import com.fakedetector.model.*;
 import com.fakedetector.util.DBConnection;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 public class ScanService {
-    private static final int SUSPICIOUS_THRESHOLD = 5;
+    public static final int SUSPICIOUS_THRESHOLD = 5;                 // now public: Phase 7 reuses it
+    private static final Pattern TOKEN_FORMAT = Pattern.compile("[0-9a-f]{32}");
 
     private final QRCodeDAO qrDao = new QRCodeDAO();
     private final ScanLogDAO logDao = new ScanLogDAO();
 
-    public VerificationResult verify(String token, String ipAddress) throws SQLException {
+    public ScanOutcome verify(String token, String ipAddress) throws SQLException {
+        if (token == null) {
+            return ScanOutcome.counterfeit();
+        }
+        token = token.trim().toLowerCase();
+        if (!TOKEN_FORMAT.matcher(token).matches()) {
+            return ScanOutcome.counterfeit();                         // wrong shape: never ask the DB
+        }
         synchronized (DBConnection.LOCK) {
             return doVerify(token, ipAddress);
         }
     }
 
-    private VerificationResult doVerify(String token, String ipAddress) throws SQLException {
-        if (token == null || token.isBlank()) {
-            return VerificationResult.COUNTERFEIT;
-        }
-
+    private ScanOutcome doVerify(String token, String ipAddress) throws SQLException {
         Connection con = DBConnection.getInstance().getConnection();
         boolean originalAutoCommit = con.getAutoCommit();
-
         try {
-            con.setAutoCommit(false);                        // START TRANSACTION
+            con.setAutoCommit(false);
 
             QRCode qr = qrDao.findByToken(token);
             if (qr == null) {
-                con.rollback();                            // nothing to record
-                return VerificationResult.COUNTERFEIT;
+                con.rollback();
+                return ScanOutcome.counterfeit();
             }
+            qrDao.incrementScanCount(qr.getQrId());
+            logDao.insert(qr.getQrId(), ipAddress);
+            QRCode updated = qrDao.findByToken(token);
+            ProductLabel label = qrDao.findLabel(qr.getQrId());
+            con.commit();
 
-            qrDao.incrementScanCount(qr.getQrId());         // change 1
-            logDao.insert(qr.getQrId(), ipAddress);         // change 2
-            QRCode updated = qrDao.findByToken(token);      // re-read the new count
-
-            con.commit();                                   // COMMIT: both changes become permanent
-            return classify(updated);
-
+            return new ScanOutcome(classify(updated), label.productName(),
+                                   label.companyName(), updated.getScanCount());
         } catch (SQLException e) {
-            con.rollback();                                 // ROLLBACK: undo both
+            con.rollback();
             throw e;
         } finally {
-            con.setAutoCommit(originalAutoCommit);          // put the connection back as we found it
+            con.setAutoCommit(originalAutoCommit);
         }
     }
 
     private VerificationResult classify(QRCode qr) {
-        if (qr.getStatus() == QRStatus.BLOCKED) {
-            return VerificationResult.BLOCKED;
-        } else if (qr.getScanCount() > SUSPICIOUS_THRESHOLD) {
-            return VerificationResult.SUSPICIOUS;
-        } else {
-            return VerificationResult.GENUINE;
-        }
+    // 1. If the QR code is blocked or deactivated by the manufacturer
+    if (qr.getStatus() != null && "BLOCKED".equalsIgnoreCase(qr.getStatus().toString())) {
+        return VerificationResult.BLOCKED;
     }
+    
+    // 2. If it has been scanned more times than the allowed threshold (5 scans)
+    if (qr.getScanCount() > SUSPICIOUS_THRESHOLD) {
+        return VerificationResult.SUSPICIOUS;
+    }
+    
+    // 3. Otherwise, it is a valid, genuine product scan
+    return VerificationResult.GENUINE;
+}
 }
