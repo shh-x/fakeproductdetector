@@ -137,4 +137,16 @@ public class QRCodeDAO {
     return null;
 }
 
+public boolean setStatusForManufacturer(int qrId, int manufacturerId, QRStatus status) throws SQLException {
+    String sql = "UPDATE qr_codes q JOIN products p ON q.product_id = p.product_id "
+               + "SET q.status = ? WHERE q.qr_id = ? AND p.manufacturer_id = ?";
+    Connection con = DBConnection.getInstance().getConnection();
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setString(1, status.name());
+        ps.setInt(2, qrId);
+        ps.setInt(3, manufacturerId);
+        return ps.executeUpdate() > 0;
+    }
+}
+
 }
