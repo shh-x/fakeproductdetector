@@ -9,6 +9,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProductDAO {
 
@@ -40,6 +42,52 @@ public class ProductDAO {
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Date d = rs.getDate("manufacture_date");
+                    return new Product(
+                            rs.getInt("product_id"),
+                            rs.getString("name"),
+                            rs.getBigDecimal("price"),
+                            d == null ? null : d.toLocalDate(),
+                            rs.getInt("manufacturer_id"));
+                }
+            }
+        }
+        return null;
+    }
+
+    // Finds all products for a specific manufacturer, ordered newest first
+    public List<Product> findByManufacturer(int manufacturerId) throws SQLException {
+        String sql = "SELECT product_id, name, price, manufacture_date, manufacturer_id FROM products WHERE manufacturer_id = ? ORDER BY product_id DESC";
+        Connection con = DBConnection.getInstance().getConnection();
+        List<Product> products = new ArrayList<>();
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, manufacturerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Date d = rs.getDate("manufacture_date");
+                    products.add(new Product(
+                            rs.getInt("product_id"),
+                            rs.getString("name"),
+                            rs.getBigDecimal("price"),
+                            d == null ? null : d.toLocalDate(),
+                            rs.getInt("manufacturer_id")));
+                }
+            }
+        }
+        return products;
+    }
+
+    // Finds a product securely ensuring it belongs to the given manufacturer
+    public Product findByIdAndManufacturer(int productId, int manufacturerId) throws SQLException {
+        String sql = "SELECT product_id, name, price, manufacture_date, manufacturer_id FROM products WHERE product_id = ? AND manufacturer_id = ?";
+        Connection con = DBConnection.getInstance().getConnection();
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            ps.setInt(2, manufacturerId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Date d = rs.getDate("manufacture_date");
