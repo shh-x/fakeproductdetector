@@ -1,4 +1,3 @@
-
 package com.fakedetector.service;
 
 import com.fakedetector.dao.QRCodeDAO;
@@ -17,7 +16,13 @@ public class ScanService {
     private final QRCodeDAO qrDao = new QRCodeDAO();
     private final ScanLogDAO logDao = new ScanLogDAO();
 
-    public synchronized VerificationResult verify(String token, String ipAddress) throws SQLException {
+    public VerificationResult verify(String token, String ipAddress) throws SQLException {
+        synchronized (DBConnection.LOCK) {
+            return doVerify(token, ipAddress);
+        }
+    }
+
+    private VerificationResult doVerify(String token, String ipAddress) throws SQLException {
         if (token == null || token.isBlank()) {
             return VerificationResult.COUNTERFEIT;
         }
@@ -26,11 +31,11 @@ public class ScanService {
         boolean originalAutoCommit = con.getAutoCommit();
 
         try {
-            con.setAutoCommit(false);                       // START TRANSACTION
+            con.setAutoCommit(false);                        // START TRANSACTION
 
             QRCode qr = qrDao.findByToken(token);
             if (qr == null) {
-                con.rollback();                             // nothing to record
+                con.rollback();                            // nothing to record
                 return VerificationResult.COUNTERFEIT;
             }
 
@@ -49,9 +54,7 @@ public class ScanService {
         }
     }
 
-    // YOUR TURN
-    
-        private VerificationResult classify(QRCode qr) {
+    private VerificationResult classify(QRCode qr) {
         if (qr.getStatus() == QRStatus.BLOCKED) {
             return VerificationResult.BLOCKED;
         } else if (qr.getScanCount() > SUSPICIOUS_THRESHOLD) {
@@ -60,4 +63,4 @@ public class ScanService {
             return VerificationResult.GENUINE;
         }
     }
-    }
+}
